@@ -6,12 +6,14 @@ import struct
 
 from . import (util, config, exceptions, bitcoin, util)
 
-FORMAT = '>QQ'
-LENGTH = 8 + 8
+FORMAT_1 = '>QQ'
+LENGTH_1 = 8 + 8
+FORMAT_2 = '>QQQ'
+LENGTH_2 = 8 + 8 + 8
 ID = 0
 
 
-def validate (db, source, destination, asset, quantity):
+def validate (db, source, destination, asset, quantity, published_balance=None):
     problems = []
 
     if asset == 'BTC': problems.append('cannot send bitcoins')  # Only for parsing.
@@ -21,6 +23,13 @@ def validate (db, source, destination, asset, quantity):
         return problems
     
     if quantity < 0: problems.append('negative quantity')
+
+    # Check DB balance against assumed balance.
+    cursor.execute('''SELECT * FROM balances \
+                      WHERE (address = ? AND asset = ?)''', (tx['source'], asset))
+    balances = list(cursor)
+    if published_balance and balances and published_balance != balances[0]['quantity']:
+        problems.append('incorrect published balance')
 
     return problems
 
@@ -39,13 +48,15 @@ def compose (db, source, destination, asset, quantity):
     balances = list(cursor.execute('''SELECT * FROM balances WHERE (address = ? AND asset = ?)''', (source, asset)))
     if not balances or balances[0]['quantity'] < quantity:
         raise exceptions.SendError('insufficient funds')
+    else:
+        balance = balances[0]['quantity']
 
-    problems = validate(db, source, destination, asset, quantity)
+    problems = validate(db, source, destination, asset, quantity, None)
     if problems: raise exceptions.SendError(problems)
 
     asset_id = util.asset_id(asset)
     data = config.PREFIX + struct.pack(config.TXTYPE_FORMAT, ID)
-    data += struct.pack(FORMAT, asset_id, quantity)
+    data += struct.pack(FORMAT_2, asset_id, quantity)
 
     cursor.close()
     return (source, [(destination, None)], data)
@@ -55,25 +66,24 @@ def parse (db, tx, message):
 
     # Unpack message.
     try:
-        assert len(message) == LENGTH
-        asset_id, quantity = struct.unpack(FORMAT, message)
+        if len(message) == LENGTH_1:
+            asset_id, quantity = struct.unpack(FORMAT_1, message)
+            published_balance = None
+            status = 'valid'
+        elif len(message) == LENGTH_2:
+            asset_id, quantity, published_balance = struct.unpack(FORMAT_2, message)
+            status = 'valid'
+        else:
+            raise Exception
         asset = util.asset_name(asset_id)
-        status = 'valid'
-    except (AssertionError, struct.error) as e:
-        asset, quantity = None, None
+    except (Exception, struct.error) as e:
+        asset, quantity, published_balance = None, None, None
         status = 'invalid: could not unpack'
 
     if status == 'valid':
-        # Oversend
-        cursor.execute('''SELECT * FROM balances \
-                                     WHERE (address = ? AND asset = ?)''', (tx['source'], asset))
-        balances = cursor.fetchall()
-        if not balances:  quantity = 0
-        elif balances[0]['quantity'] < quantity:
-            quantity = min(balances[0]['quantity'], quantity)
         # For SQLite3
         quantity = min(quantity, config.MAX_INT)
-        problems = validate(db, tx['source'], tx['destination'], asset, quantity)
+        problems = validate(db, tx['source'], tx['destination'], asset, quantity, published_balance)
         if problems: status = 'invalid: ' + '; '.join(problems)
 
     if status == 'valid':
