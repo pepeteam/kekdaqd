@@ -555,24 +555,6 @@ def initialise(db):
 
     cursor.close()
 
-def get_pubkeyhash (scriptpubkey):
-    asm = scriptpubkey['asm'].split(' ')
-    if len(asm) != 5 or asm[0] != 'OP_DUP' or asm[1] != 'OP_HASH160' or asm[3] != 'OP_EQUALVERIFY' or asm[4] != 'OP_CHECKSIG':
-        return False
-    return asm[2]
-
-def get_address (scriptpubkey):
-    pubkeyhash = get_pubkeyhash(scriptpubkey)
-    if not pubkeyhash: return False
-
-    address = bitcoin.base58_check_encode(pubkeyhash, config.ADDRESSVERSION)
-
-    # Test decoding of address.
-    if address != config.UNSPENDABLE and binascii.unhexlify(bytes(pubkeyhash, 'utf-8')) != bitcoin.base58_decode(address, config.ADDRESSVERSION):
-        return False
-
-    return address
-
 def get_tx_info (tx, block_index):
     """
     The destination, if it exists, always comes before the data output; the
@@ -584,46 +566,60 @@ def get_tx_info (tx, block_index):
 
     # Get destination output and data output.
     destination, btc_amount, data = None, None, b''
-    pubkeyhash_encoding = False
     for vout in tx['vout']:
         fee -= vout['value'] * config.UNIT
 
-        # Sum data chunks to get data. (Can mix OP_RETURN and multi-sig.)
+        # Sum data chunks to get data.
         asm = vout['scriptPubKey']['asm'].split(' ')
-        if len(asm) == 2 and asm[0] == 'OP_RETURN':                                                 # OP_RETURN
+        if asm[0] == 'OP_RETURN':
+            if len(asm) != 2: continue
             try: data_chunk = binascii.unhexlify(bytes(asm[1], 'utf-8'))
-            except binascii.Error: continue
+            except binascii.Error, IndexError: continue
+
             data += data_chunk
-        elif len(asm) == 5 and asm[0] == '1' and asm[3] == '2' and asm[4] == 'OP_CHECKMULTISIG':    # Multi-sig
-            try: data_pubkey = binascii.unhexlify(bytes(asm[2], 'utf-8'))
-            except binascii.Error: continue
-            data_chunk_length = data_pubkey[0]  # No ord() necessary.
-            data_chunk = data_pubkey[1:data_chunk_length + 1]
-            data += data_chunk
-        elif len(asm) == 5 and (block_index >= 293000 or config.TESTNET):    # Protocol change.
-            # Be strict.
-            pubkeyhash_string = get_pubkeyhash(vout['scriptPubKey'])
-            try: pubkeyhash = binascii.unhexlify(bytes(pubkeyhash_string, 'utf-8'))
+
+        elif asm[-1] == 'OP_CHECKMULTISIG':
+            try: pubkey = binascii.unhexlify(bytes(asm[2], 'utf-8'))
+            except binascii.Error, IndexError: continue
+
+            addresses = []
+            if len(asm) == 5:       # N‐of‐2
+                data_chunk = pubkey[1:pubkey[0] + 1]
+                # Data
+                if data or data_chunk[:len(config.PREFIX)] == config.PREFIX:
+                    if asm[0] != '1' or asm[3] != '2': continue # Must be 1‐of‐2 to carry data.
+                    data += data_chunk
+                else:
+                    for pubkey in (asm[2], asm[4]):
+                        pubkeyhash = bitcoin.hash160(pubkey)
+                        addresses.append(bitcoin.base58_check_encode(pubkeyhash, config.ADDRESSVERSION))
+                    # TODO: destination, btc_amount
+            elif len(asm) == 7:     # N‐of‐3
+                # TODO: destination, btc_amount
+
+            if addresses:
+                destination = ' '.join(addresses)
+                btc_amount = round(vout['value'] * config.UNIT) # Floats are awful.
+
+        elif asm[-1] == 'OP_CHECKSIG':
+            if len(asm) != 5 or asm[0] != 'OP_DUP' or asm[1] != 'OP_HASH160' or asm[3] != 'OP_EQUALVERIFY': continue
+            try: pubkeyhash = binascii.unhexlify(bytes(asm[2], 'utf-8'))
             except binascii.Error: continue
 
-            if 'coinbase' in tx['vin'][0]: return b'', None, None, None, None
-            obj1 = ARC4.new(binascii.unhexlify(bytes(tx['vin'][0]['txid'], 'utf-8')))
-            data_pubkey = obj1.decrypt(pubkeyhash)
-            if data_pubkey[1:9] == config.PREFIX or pubkeyhash_encoding:
-                pubkeyhash_encoding = True
-                data_chunk_length = data_pubkey[0]  # No ord() necessary.
+            key = ARC4.new(binascii.unhexlify(bytes(tx['vin'][0]['txid'], 'utf-8')))
+            data_pubkey = key.decrypt(pubkeyhash)
+            if data or data_pubkey[1:9] == config.PREFIX:
+                # Data
+                if block_index < 293000 and not config.TESTNET: continue  # Protocol change.
+                data_chunk_length = data_pubkey[0]
                 data_chunk = data_pubkey[1:data_chunk_length + 1]
                 if data_chunk[-8:] == config.PREFIX:
                     data += data_chunk[:-8]
-                    break
+                    break   # What follows are change outputs, which is totally ignored.
                 else:
                     data += data_chunk
-
-        # Destination is the first output before the data.
-        if not destination and not btc_amount and not data:
-            address = get_address(vout['scriptPubKey'])
-            if address:
-                destination = address
+            else:
+                destination = pubkeyhash
                 btc_amount = round(vout['value'] * config.UNIT) # Floats are awful.
 
     # Check for, and strip away, prefix (except for burns).
@@ -638,7 +634,7 @@ def get_tx_info (tx, block_index):
     if not data and destination != config.UNSPENDABLE:
         return b'', None, None, None, None
 
-    # Collect all possible source addresses; ignore coinbase transactions and anything but the simplest Pay‐to‐PubkeyHash inputs.
+    # Collect all possible source addresses; ignore coinbase transactions.
     source_list = []
     for vin in tx['vin']:                                               # Loop through input transactions.
         if 'coinbase' in vin: return b'', None, None, None, None
@@ -646,9 +642,9 @@ def get_tx_info (tx, block_index):
         vout = vin_tx['vout'][vin['vout']]
         fee += vout['value'] * config.UNIT
 
-        address = get_address(vout['scriptPubKey'])
-        if not address: return b'', None, None, None, None
-        else: source_list.append(address)
+        asm = vout['scriptPubKey']['asm'].split(' ')
+        # TODO: pubkeyhash = asm[2]
+        source_list.append(FOOBAR)
 
     # Require that all possible source addresses be the same.
     if all(x == source_list[0] for x in source_list): source = source_list[0]
