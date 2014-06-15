@@ -914,11 +914,9 @@ def follow (db):
                     t.daemon = True
                     t.start()
                     tx_index += 1
-                print('foobar')
 
                 # Parse the transactions in the block.
                 parse_block(db, block_index, block_time)
-                exit(0) # TODO
 
             # Increment block index.
             block_count = bitcoin.get_block_count()
@@ -927,12 +925,6 @@ def follow (db):
         else:
             # Check for conservation of assets.
             check_conservation(db)
-            # TODO:
-                # parse TXs in mempool with block_index 0
-                    # will this be problematic?
-                # rollback to latest [actual] block
-                    # using savepoints?!?!
-            print(bitcoin.get_mempool())    # TODO
             time.sleep(2)
 
     follow_cursor.close()
