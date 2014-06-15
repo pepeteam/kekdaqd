@@ -12,6 +12,7 @@ import decimal
 D = decimal.Decimal
 import logging
 from Crypto.Cipher import ARC4
+import multiprocessing
 
 from . import (config, exceptions, util, bitcoin)
 from . import (send, order, btcpay, issuance, broadcast, bet, dividend, burn, cancel, callback)
@@ -787,6 +788,37 @@ def reparse (db, block_index=None, quiet=False):
     cursor.close()
     return
 
+def add_tx (tx_hash, block_index, tx_index):
+    # Get the important details about each transaction.
+    tx = bitcoin.get_raw_transaction(tx_hash)
+    logging.debug('Status: examining transaction {}'.format(tx_hash))
+    source, destination, btc_amount, fee, data = get_tx_info(tx, block_index)
+    if source and (data or destination == config.UNSPENDABLE):
+        follow_cursor.execute('''INSERT INTO transactions(
+                            tx_index,
+                            tx_hash,
+                            block_index,
+                            block_hash,
+                            block_time,
+                            source,
+                            destination,
+                            btc_amount,
+                            fee,
+                            data) VALUES(?,?,?,?,?,?,?,?,?,?)''',
+                            (tx_index,
+                             tx_hash,
+                             block_index,
+                             block_hash,
+                             block_time,
+                             source,
+                             destination,
+                             btc_amount,
+                             fee,
+                             data)
+                      )
+        return True
+    else:
+        return False
 
 def follow (db):
     # TODO: This is not thread-safe!
@@ -877,44 +909,15 @@ def follow (db):
                               )
 
                 # List the transactions in the block.
+                pool = multiprocessing.Pool()
                 for tx_hash in tx_hash_list:
-                    # Skip duplicate transaction entries.
-                    follow_cursor.execute('''SELECT * FROM transactions WHERE tx_hash=?''', (tx_hash,))
-                    blocks = follow_cursor.fetchall()
-                    if blocks:
-                        tx_index += 1
-                        continue
-                    # Get the important details about each transaction.
-                    tx = bitcoin.get_raw_transaction(tx_hash)
-                    logging.debug('Status: examining transaction {}'.format(tx_hash))
-                    source, destination, btc_amount, fee, data = get_tx_info(tx, block_index)
-                    if source and (data or destination == config.UNSPENDABLE):
-                        follow_cursor.execute('''INSERT INTO transactions(
-                                            tx_index,
-                                            tx_hash,
-                                            block_index,
-                                            block_hash,
-                                            block_time,
-                                            source,
-                                            destination,
-                                            btc_amount,
-                                            fee,
-                                            data) VALUES(?,?,?,?,?,?,?,?,?,?)''',
-                                            (tx_index,
-                                             tx_hash,
-                                             block_index,
-                                             block_hash,
-                                             block_time,
-                                             source,
-                                             destination,
-                                             btc_amount,
-                                             fee,
-                                             data)
-                                      )
-                        tx_index += 1
+                    result = add_tx(tx_hash, block_index, tx_index)
+                    # result = pool.apply_async(add_tx, [tx_hash, block_index, tx_index]) 
+                    if result: tx_index += 1
 
                 # Parse the transactions in the block.
                 parse_block(db, block_index, block_time)
+                exit(0) # TODO
 
             # Increment block index.
             block_count = bitcoin.get_block_count()
