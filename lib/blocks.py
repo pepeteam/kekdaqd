@@ -12,7 +12,7 @@ import decimal
 D = decimal.Decimal
 import logging
 from Crypto.Cipher import ARC4
-import multiprocessing
+from threading import Thread
 
 from . import (config, exceptions, util, bitcoin)
 from . import (send, order, btcpay, issuance, broadcast, bet, dividend, burn, cancel, callback)
@@ -788,7 +788,7 @@ def reparse (db, block_index=None, quiet=False):
     cursor.close()
     return
 
-def add_tx (tx_hash, block_index, tx_index):
+def list_tx (tx_hash, block_index, tx_index):
     # Get the important details about each transaction.
     tx = bitcoin.get_raw_transaction(tx_hash)
     logging.debug('Status: examining transaction {}'.format(tx_hash))
@@ -816,9 +816,8 @@ def add_tx (tx_hash, block_index, tx_index):
                              fee,
                              data)
                       )
-        return True
-    else:
-        return False
+    print('async', tx_index) # TODO
+    return
 
 def follow (db):
     # TODO: This is not thread-safe!
@@ -909,11 +908,13 @@ def follow (db):
                               )
 
                 # List the transactions in the block.
-                pool = multiprocessing.Pool()
                 for tx_hash in tx_hash_list:
-                    result = add_tx(tx_hash, block_index, tx_index)
-                    # result = pool.apply_async(add_tx, [tx_hash, block_index, tx_index]) 
-                    if result: tx_index += 1
+                    # list_tx(tx_hash, block_index, tx_index)
+                    t = Thread(target=list_tx, args=(tx_hash, block_index, tx_index))
+                    t.daemon = True
+                    t.start()
+                    tx_index += 1
+                print('foobar')
 
                 # Parse the transactions in the block.
                 parse_block(db, block_index, block_time)
