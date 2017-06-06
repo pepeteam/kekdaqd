@@ -254,6 +254,7 @@ def op_push (i):
 
 def serialise (encoding, inputs, destination_outputs, data_output=None, change_output=None, source=None, public_key=None):
     s  = (1).to_bytes(4, byteorder='little')                # Version
+    s += (int(time.time())).to_bytes(4, byteorder='little') # nTime
 
     # Number of inputs.
     s += var_int(int(len(inputs)))
