@@ -386,7 +386,7 @@ def wif_prefix (is_test):
     if is_test:
         return b'\xf1'
     else:
-        return b'\x9e'
+        return b'\x99'
 
 def private_key_to_public_key (private_key_wif):
     try:
