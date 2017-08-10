@@ -339,7 +339,10 @@ def serialise (encoding, inputs, destination_outputs, data_output=None, change_o
     if change_output:
         address, value = change_output
         pubkeyhash = base58_decode(address, config.ADDRESSVERSION)
-        s += value.to_bytes(8, byteorder='little')          # Value
+        print('Change Output Address: ', address)
+        print('Change Output Pubkeyhash: ', pubkeyhash)
+        print('Change Output Value: ', round(value))
+        s += round(value).to_bytes(8, byteorder='little')          # Value
         script = OP_DUP                                     # OP_DUP
         script += OP_HASH160                                # OP_HASH160
         script += op_push(20)                               # Push 0x14 bytes

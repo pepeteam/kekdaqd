@@ -225,7 +225,7 @@ def set_options (data_dir=None, backend_rpc_connect=None,
         config_path = os.path.join(config.DATA_DIR, '{}.conf'.format(config.XCP_CLIENT))
     configfile.read(config_path)
     has_config = 'Default' in configfile
-    #logging.debug("Config file: %s; Exists: %s" % (config_path, "Yes" if has_config else "No"))
+    print("Config file: %s; Exists: %s" % (config_path, "Yes" if has_config else "No"))
 
     # testnet
     if testnet:

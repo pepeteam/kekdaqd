@@ -1,6 +1,14 @@
 import sys
 import os
 
+BLOCKCHAIN_SERVICE_NAME = 'insight'
+BLOCKCHAIN_SERVICE_CONNECT = 'http://127.0.0.1:3000'
+
+BACKEND_RPC_USER = 'fred'
+BACKEND_RPC_PASSWORD = 'fl1ntst0n3'
+RPC_USER = 'fred'
+RPC_PASSWORD = 'fl1ntst0n3'
+
 """Variables prefixed with `DEFAULT` should be able to be overridden by
 configuration file and command‐line arguments."""
 
@@ -41,8 +49,8 @@ BTC_CLIENT = 'pepecoind'
 XCP_NAME = 'Kekdaq'
 XCP_CLIENT = 'kekdaqd'
 
-DEFAULT_RPC_PORT_TESTNET = 39377
-DEFAULT_RPC_PORT = 29377
+DEFAULT_RPC_PORT_TESTNET = 19377
+DEFAULT_RPC_PORT = 9377
 
 DEFAULT_BACKEND_RPC_PORT_TESTNET = 39376
 DEFAULT_BACKEND_RPC_PORT = 29376
