@@ -349,23 +349,23 @@ def connect_to_db(flags=None):
     return db
 
 def version_check (db):
-    try:
-        host = 'https://raw.githubusercontent.com/Dogeparty/dogepartyd/master/version.json'
-        response = requests.get(host, headers={'cache-control': 'no-cache'})
-        versions = json.loads(response.text)
-    except Exception as e:
-        raise exceptions.VersionError('Unable to check version. How’s your Internet access?')
+#    try:
+#        host = 'https://raw.githubusercontent.com/Dogeparty/dogepartyd/master/version.json'
+#        response = requests.get(host, headers={'cache-control': 'no-cache'})
+#        versions = json.loads(response.text)
+#    except Exception as e:
+#        raise exceptions.VersionError('Unable to check version. How’s your Internet access?')
 
     # Check client version.
     passed = True
-    if config.VERSION_MAJOR < versions['minimum_version_major']:
-        passed = False
-    elif config.VERSION_MAJOR == versions['minimum_version_major']:
-        if config.VERSION_MINOR < versions['minimum_version_minor']:
-            passed = False
-        elif config.VERSION_MINOR == versions['minimum_version_minor']:
-            if config.VERSION_REVISION < versions['minimum_version_revision']:
-                passed = False
+#    if config.VERSION_MAJOR < versions['minimum_version_major']:
+#        passed = False
+#    elif config.VERSION_MAJOR == versions['minimum_version_major']:
+#        if config.VERSION_MINOR < versions['minimum_version_minor']:
+#            passed = False
+#        elif config.VERSION_MINOR == versions['minimum_version_minor']:
+#            if config.VERSION_REVISION < versions['minimum_version_revision']:
+#                passed = False
 
     if not passed:
         explanation = 'Your version of counterpartyd is v{}, but, as of block {}, the minimum version is v{}.{}.{}. Reason: ‘{}’. Please upgrade to the latest version and restart the server.'.format(config.VERSION_STRING, versions['block_index'], versions['minimum_version_major'], versions['minimum_version_minor'], versions['minimum_version_revision'], versions['reason'])

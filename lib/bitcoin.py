@@ -284,7 +284,8 @@ def serialise (encoding, inputs, destination_outputs, data_output=None, change_o
     # Destination output.
     for address, value in destination_outputs:
         pubkeyhash = base58_decode(address, config.ADDRESSVERSION)
-        s += value.to_bytes(8, byteorder='little')          # Value
+        print('value: ', value)
+        s += round(value).to_bytes(8, byteorder='little')          # Value
         script = OP_DUP                                     # OP_DUP
         script += OP_HASH160                                # OP_HASH160
         script += op_push(20)                               # Push 0x14 bytes
@@ -297,7 +298,9 @@ def serialise (encoding, inputs, destination_outputs, data_output=None, change_o
     # Data output.
     for data_chunk in data_array:
         data_array, value = data_output # DUPE
-        s += value.to_bytes(8, byteorder='little')        # Value
+        print('encoding: ', encoding)
+        print('value data_output: ', value)
+        s += round(value).to_bytes(8, byteorder='little')        # Value
 
         if encoding == 'multisig':
             # Get data (fake) public key.
