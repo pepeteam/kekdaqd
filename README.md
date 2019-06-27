@@ -16,6 +16,18 @@ We provide a Docker recipe to run kekdaqd easily: <https://github.com/Kekdaq/kek
 * Python 3 packages: apsw, requests, appdirs, prettytable, python-dateutil, json-rpc, tornado, flask, Flask-HTTPAuth, pycoin, pyzmq(v2.2+), pycrypto (see [this link](https://github.com/Kekdaq/kekdaqd/blob/master/pip-requirements.txt) for exact working versions)
 * pepecoind
 
+# Quick Start
+```
+sudo apt install python3 python3-pip
+git clone https://github.com/kekdaq/kekdaqd
+cd kekdaqd
+pip3 install --upgrade -r pip-requirements.txt
+```
+Start: (must match your pepecoin.conf RPC settings, also update lib/config.py)
+```
+python3 ./kekdaqd.py --rpc-user=pepeuser --rpc-password=pepepass
+```
+
 # Installation
 
 **NOTE: This section covers manual installation of kekdaqd. If you want more of
@@ -91,8 +103,8 @@ For a summary of the command‐line arguments and options, see
 * Quantities of indivisible assets are written as integers.
 * All other quantities, i.e. prices, odds, leverages, feed values and target
 values, fee multipliers, are specified to four decimal places.
-* kekdaqd identifies an Order, Bet, Order Match or Bet Match by an
-‘Order ID’, ‘Bet ID’, ‘Order Match ID’, or ‘Bet Match ID’, respectively. Match
+* kekdaqd identifies an Order, Order Match or Bet Match by an
+‘Order ID’, ‘Order Match ID’, or ‘Bet Match ID’, respectively. Match
 IDs are concatenations of the hashes of the two transactions which compose the
 corresponding Match, in the order of their appearances in the blockchain.
 
