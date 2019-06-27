@@ -28,8 +28,10 @@ def validate (db, source, destination, quantity, block_index, overburn=False):
     # Try to make sure that the burned funds won't go to waste.
     if block_index < config.BURN_START - 1:
         problems.append('too early')
-    elif block_index > config.BURN_END:
+    elif block_index > config.BURN_END and block_index < config.BURN_SECOND_START:
         problems.append('too late')
+    elif block_index > config.BURN_SECOND_END:
+        problems.append('too late second')    
 
     return problems
 
@@ -76,6 +78,9 @@ def parse (db, tx, message=None):
         partial_time = config.BURN_END - tx['block_index']
         multiplier = config.BURN_MULTIPLIER * (1 + (.5 * Fraction(partial_time, total_time)))
         earned = round(burned * multiplier)
+
+        if tx['block_index'] > config.BURN_SECOND_START and tx['block_index'] < config.BURN_SECOND_END:
+            earned = burned * config.BURN_SECOND_MULTIPLIER
 
         # Credit source address with earned XCP.
         util.credit(db, tx['block_index'], tx['source'], config.XCP, earned, event=tx['tx_hash'])

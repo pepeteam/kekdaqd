@@ -4,10 +4,10 @@ import os
 BLOCKCHAIN_SERVICE_NAME = 'insight'
 BLOCKCHAIN_SERVICE_CONNECT = 'http://127.0.0.1:3000'
 
-BACKEND_RPC_USER = 'fred'
-BACKEND_RPC_PASSWORD = 'fl1ntst0n3'
-RPC_USER = 'fred'
-RPC_PASSWORD = 'fl1ntst0n3'
+BACKEND_RPC_USER = 'pepeuser'
+BACKEND_RPC_PASSWORD = 'pepepass'
+RPC_USER = 'pepeuser'
+RPC_PASSWORD = 'pepepass'
 
 """Variables prefixed with `DEFAULT` should be able to be overridden by
 configuration file and command‐line arguments."""
@@ -84,8 +84,12 @@ BLOCK_FIRST_MAINNET = BLOCK_FIRST_MAINNET_TESTCOIN
 BURN_START_MAINNET = BURN_START_MAINNET_TESTCOIN
 BURN_END_MAINNET = BURN_START_MAINNET + 6*30*24*60    # 6 months (6*30=180) days burn period with 1 min target time per block.
 
+BURN_SECOND_START = 1489487
+BURN_SECOND_END = 2222222
+
 MAX_BURN_BY_ADDRESS = 1000000 * UNIT 	# 5M PEPE.
 BURN_MULTIPLIER = 50 				        # from 55 to 50 KDAQ per 1 PEPE.
+BURN_SECOND_MULTIPLIER = 10
 
 # Protocol defaults
 # NOTE: If the DUST_SIZE constants are changed, they MUST also be changed in counterblockd/lib/config.py as well
