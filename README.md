@@ -23,7 +23,7 @@ git clone https://github.com/kekdaq/kekdaqd
 cd kekdaqd
 pip3 install --upgrade -r pip-requirements.txt
 ```
-Start: (must match your pepecoin.conf RPC settings, also update lib/config.py)
+Start: (must match your pepecoin.conf RPC settings, also update lib/config.py and /home/user/.config/kekdaqd/kekdaq.conf)
 ```
 python3 ./kekdaqd.py --rpc-user=pepeuser --rpc-password=pepepass
 ```

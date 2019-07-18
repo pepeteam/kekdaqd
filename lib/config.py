@@ -5,9 +5,9 @@ BLOCKCHAIN_SERVICE_NAME = 'insight'
 BLOCKCHAIN_SERVICE_CONNECT = 'http://127.0.0.1:3000'
 
 BACKEND_RPC_USER = 'pepeuser'
-BACKEND_RPC_PASSWORD = 'pepepass'
+BACKEND_RPC_PASSWORD = 'peperpcpass'
 RPC_USER = 'pepeuser'
-RPC_PASSWORD = 'pepepass'
+RPC_PASSWORD = 'peperpcpass'
 
 """Variables prefixed with `DEFAULT` should be able to be overridden by
 configuration file and command‐line arguments."""
