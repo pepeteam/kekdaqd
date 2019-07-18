@@ -219,6 +219,9 @@ def set_options (data_dir=None, backend_rpc_connect=None,
 
     # Configuration file
     configfile = configparser.ConfigParser()
+    if not config_file:
+        config_file = "kekdaqd.conf"
+        
     if config_file:
         config_path = config_file
     else:
