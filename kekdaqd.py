@@ -222,9 +222,6 @@ def set_options (data_dir=None, backend_rpc_connect=None,
 
     print("Loading kekdaqd database files from %s" % str(config.DATA_DIR))
 
-    #dirr = os.path.expanduser("~/.kekdaq/" + config.XCP_CLIENT)
-    #print(dirr)
-
     # Configuration file
     configfile = configparser.ConfigParser()
     if not config_file:
@@ -236,7 +233,7 @@ def set_options (data_dir=None, backend_rpc_connect=None,
         config_path = os.path.join(config.DATA_DIR, '{}.conf'.format(config.XCP_CLIENT))
     configfile.read(config_path)
     has_config = 'Default' in configfile
-    print("Config file: %s; Exists: %s" % (config_path, "Yes" if has_config else "No"))
+    print("Config file loaded from: %s; Exists: %s" % (config_path, "Yes" if has_config else "No"))
 
     # testnet
     if testnet:
@@ -319,7 +316,7 @@ def set_options (data_dir=None, backend_rpc_connect=None,
     elif has_config and 'bitcoind-rpc-password' in configfile['Default'] and configfile['Default']['bitcoind-rpc-password']:
         config.BACKEND_RPC_PASSWORD = configfile['Default']['bitcoind-rpc-password']
     else:
-        raise exceptions.ConfigurationError('backend RPC password not set. (Use configuration file or --backend-rpc-password=PASSWORD)')
+        raise exceptions.ConfigurationError('backend RPC password not set. (Set in kekdaqd.conf configuration file or run with --backend-rpc-password=PASSWORD)')
 
     # Backend Core RPC SSL
     if backend_rpc_ssl:
