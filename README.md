@@ -1,15 +1,23 @@
 # Description
-Kekdaq is a fork of Counterparty, a protocol for the creation and use of decentralised financial
-instruments such as asset exchanges, contracts for difference and dividend
-payments. It uses Pepecoin as a transport layer. The contents of this
-repository, `kekdaqd`, constitute the reference implementation of the
-protocol.
+Kekdaq is a heavily modified fork of Counterparty, a protocol for the creation and 
+use of decentralised instruments such as trading cards, unique digital items, tokens, 
+smart contracts, peer-to-peer non-custodial exchange, digital assets, and colored 
+coins. Users control their own wallets and assets without a trusted third party,
+through the PepeCoin / Memetic Project blockchain.
 
-The Counterparty protocol specification may be found at <http://counterparty.io/docs/protocol/>
+It uses Pepecoind (aka Memetic) as a transport layer. The contents of this
+repository, `kekdaqd`, constitute the reference implementation of the
+protocol. 
+
+Kekdaq is modified from the original Counterparty protocol to be compliant with the
+rules and regulations of the USA. It is fully non-custodial and all "betting" and "dividend" 
+features are disabled or removed. There are additional features being added and the Counterparty
+protocol docs will eventually be replaced with a concise Kekdaq protocol specification.
+
+The original Counterparty protocol specification may be found at <http://counterparty.io/docs/protocol/>
 and the original counterpartyd implementation at <https://github.com/CounterpartyXCP/counterpartyd>.
 
-We provide a Docker recipe to run kekdaqd easily: <https://github.com/Kekdaq/kekdaqd-docker>.
-
+We provide a bash script to install and run kekdaqd easily and a Docker script is on the roadmap.
 
 # Dependencies
 * [Python 3](http://python.org)
@@ -23,9 +31,12 @@ git clone https://github.com/kekdaq/kekdaqd
 cd kekdaqd
 pip3 install --upgrade -r pip-requirements.txt
 ```
-Start: (must match your pepecoin.conf RPC settings, also update lib/config.py and /home/user/.config/kekdaqd/kekdaq.conf)
+Config: User settings are loaded from kekdaqd.conf or ~/.kekdaq/kekdaqd/kekdaqd.conf
+        Program settings are loaded from lib/config.py
+
+Start: Set rpc user/pass in kekdaqd.conf or on the command line and start kekdaqd.py:
 ```
-python3 ./kekdaqd.py --rpc-user=pepeuser --rpc-password=pepepass
+python3 ./kekdaqd.py --rpc-user=pepeuser --rpc-password=peperpcpass
 ```
 
 # Installation
@@ -47,7 +58,7 @@ include it in all command‐line invocations of kekdaqd, such as
 options persistent across kekdaqd sessions, one may store the desired
 settings in a configuration file specific to kekdaqd.
 
-Note that the syntaxes for the countpartyd and the Pepecoind configuraion
+The syntaxes for the countpartyd and the Pepecoind configuration
 files are not the same. A Pepecoind configuration file looks like this:
 
 	rpcuser=pepecoinrpc
@@ -56,17 +67,19 @@ files are not the same. A Pepecoind configuration file looks like this:
 	txindex=1
 	server=1
 
-However, a kekdaqd configuration file looks like this:
+A kekdaqd configuration file looks like this:
 
 	[Default]
-	pepecoind-rpc-password=PASSWORD
+	backend-rpc-user=pepeuser
+	backend-rpc-password=peperpcpass
+	rpc-user=pepecoinrpc
+	rpc-password=PASSWORD
+	
 
-Note the change in hyphenation between `rpcpassword` and `rpc-password`.
+Note that backend-rpc-user is the user for the kekdaqd API and rpc-user is the user for the pepecoin daemon RPC.
 
-If and only if kekdaqd is to be run on the Pepecoin testnet, with the
-`--testnet` CLI option, Pepecoind must be set to do the same (`-testnet=1`).
-kekdaqd may run with the `--testcoin` option on any blockchain,
-however.
+Insight API is required and pepe-insight-api repo is provided with default configs that match kekdaqd defaults. 
+Setup scripts under development now will help manage the interworking components.
 
 # Updating your requirements
 
@@ -101,7 +114,7 @@ For a summary of the command‐line arguments and options, see
 ## Input and Output
 * Quantities of divisible assets are written to eight decimal places.
 * Quantities of indivisible assets are written as integers.
-* All other quantities, i.e. prices, odds, leverages, feed values and target
+* All other quantities, i.e. prices, feed values and target
 values, fee multipliers, are specified to four decimal places.
 * kekdaqd identifies an Order, Order Match or Bet Match by an
 ‘Order ID’, ‘Order Match ID’, or ‘Bet Match ID’, respectively. Match
@@ -109,58 +122,63 @@ IDs are concatenations of the hashes of the two transactions which compose the
 corresponding Match, in the order of their appearances in the blockchain.
 
 
-## Examples
-The following examples are abridged for parsimony.
+## How to Use / Examples
 
 * Server
 
-	The `server` command should always be running in the background. All other commands will fail if the index of the last block in the database is less than that of the last block seen by Pepecoind.
+	The `server` command should always be running in the background. 
+	A second kekdaqd or kekdaq-wallet instance is used to communicate with the kekdaqd server.
+	Other commands will fail if kekdaqd's block height falls behind pepecoind.
 
-* Burn
-
-	`burn --source=mtQheFaSfWELRB2MyMBaiWjdDm6ux9Ezns --quantity=.5`
+* Burn 
+	Burn PEPE/MEME for KDAQ at 1:10 ratio before block 3,000,000.
+	```
+	./kekdaq.py burn --source=PCLhE3kedPr5eavvbt8dBkRFm3ozgEcmaB --quantity=100
+	```
 
 * Send divisible or indivisible assets
 
 	```
-	send --source=mtQheFaSfWELRB2MyMBaiWjdDm6ux9Ezns --quantity=3 --asset=BBBC
-	--to=n3BrDB6zDiEPWEE6wLxywFb4Yp9ZY5fHM7
+	./kekdaq.py send --source=PCLhE3kedPr5eavvbt8dBkRFm3ozgEcmaB --quantity=3 --asset=PEPECARD
+	--to=PEPHiyjtNwJcyq4rJQSRDanPfS9hVkWSNB
 	```
 
 * Buy PEPE for KDAQ
 
 	```
-	order --source=mtQheFaSfWELRB2MyMBaiWjdDm6ux9Ezns --get-quantity=10 --get-asset=PEPE
+	order --source=PCLhE3kedPr5eavvbt8dBkRFm3ozgEcmaB --get-quantity=10 --get-asset=PEPE
 	--give-quantity=20 --give-asset=KDAQ --expiration=10 --fee_required=.001
 	```
 
-* Buy BBBC for PEPE
+* Buy PEPECARD for PEPE
 
 	```
-	order --source=mtQheFaSfWELRB2MyMBaiWjdDm6ux9Ezns --get-quantity=10 --get-asset=BBBC
+	order --source=PCLhE3kedPr5eavvbt8dBkRFm3ozgEcmaB --get-quantity=10 --get-asset=PEPECARD
 	--give-quantity=20 --give-asset=PEPE --expiration=10 --fee_provided=0.001
 	```
 
-* Buy KDAQ for BBBC
+* Buy KDAQ for PEPECARD
 	```
-	order --source=mtQheFaSfWELRB2MyMBaiWjdDm6ux9Ezns --get-quantity=10 --get-asset=KDAQ
-	--give-quantity=20 --give-asset=BBBC --expiration=10
-	```
-
-* BTCPay
-	```
-	btcpay --source=-source=mtQheFaSfWELRB2MyMBaiWjdDm6ux9Ezns --order-match-id=092f15d36786136c4d868c33356ec3c9b5a0c77de54ed0e96a8dbdd8af160c23
+	order --source=PCLhE3kedPr5eavvbt8dBkRFm3ozgEcmaB --get-quantity=1000 --get-asset=KDAQ
+	--give-quantity=2 --give-asset=PEPECARD --expiration=10
 	```
 
-* Issue
+* PepePay
+	```
+	pepepay --source=-source=PCLhE3kedPr5eavvbt8dBkRFm3ozgEcmaB --order-match-id=092f15d36786136c4d868c33356ec3c9b5a0c77de54ed0e96a8dbdd8af160c23
+	```
 
-	`issuance --source=mtQheFaSfWELRB2MyMBaiWjdDm6ux9Ezns --quantity=100 --asset='BBBC'`
+* Issue Non Divisible assets (like cards)
 
-	`issuance --source=mtQheFaSfWELRB2MyMBaiWjdDm6ux9Ezns --quantity=100 --asset='BBBQ' --divisible`
+	`issuance --source=PCLhE3kedPr5eavvbt8dBkRFm3ozgEcmaB --quantity=1000 --asset='MYNEWASSET'`
+
+* Issue divisible assets
+
+	`issuance --source=PCLhE3kedPr5eavvbt8dBkRFm3ozgEcmaB --quantity=1000 --asset='BBBQ' --divisible`
 
 * Broadcast
 	```
-	broadcast --source=mtQheFaSfWELRB2MyMBaiWjdDm6ux9Ezns --text="Pepecoin price feed" --value=825.22
+	broadcast --source=PCLhE3kedPr5eavvbt8dBkRFm3ozgEcmaB --text="Pepecoin price feed" --value=825.22
 	--fee-multiplier=0.001
 	```
 
@@ -170,13 +188,13 @@ The following examples are abridged for parsimony.
 
 * Cancel
 	```
-	cancel --source=-source=mtQheFaSfWELRB2MyMBaiWjdDm6ux9Ezns --offer-hash=092f15d36786136c4d868c33356ec3c9b5a0c77de54ed0e96a8dbdd8af160c23
+	cancel --source=-source=PCLhE3kedPr5eavvbt8dBkRFm3ozgEcmaB --offer-hash=092f15d36786136c4d868c33356ec3c9b5a0c77de54ed0e96a8dbdd8af160c23
 	```
 
 * Market
 
-	The `market` action prints out tables of open orders, open bets, feeds, and order matches currently awaiting 	        Pepecoin payments from one of your addresses.
-
+	The `market` action prints out tables of open orders, feeds, and order matches currently awaiting Pepecoin payments from one of your addresses.	
+	
 	It is capable of filtering orders by assets to be bought and sold.
 
 	Example:
@@ -203,4 +221,16 @@ The following examples are abridged for parsimony.
 * Address
 
 	The `address` action displays the details of of all transactions involving the Counterparty address which is its argument.
+
+
+
+
+#
+#
+
+---------------------
+Copyright (c) 2016-2019 PepeCoin / Memetic Developers
+Copyright (c) 2013-2018 Counterparty Developers
+
+Released under MIT License
 

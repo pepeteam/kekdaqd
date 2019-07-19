@@ -211,21 +211,34 @@ def set_options (data_dir=None, backend_rpc_connect=None,
         config.FORCE = False
 
     # Data directory
+    # Organize kekdaqd database files in /home/USER/.kekdaq/ directory
+    #
+
     if not data_dir:
-        config.DATA_DIR = appdirs.user_data_dir(appauthor=config.XCP_NAME, appname=config.XCP_CLIENT, roaming=True)
+        config.DATA_DIR = os.path.expanduser("~/.kekdaq/" + config.XCP_CLIENT)
     else:
         config.DATA_DIR = os.path.expanduser(data_dir)
-    if not os.path.isdir(config.DATA_DIR): os.mkdir(config.DATA_DIR)
+    if not os.path.isdir(config.DATA_DIR): os.makedirs(config.DATA_DIR, exist_ok=True)
 
     # Configuration file
+    # Look for kekdaqd.conf in --config_file command line parameter, then in program directory, then ~/.kekdaq/kekdaqd/kekdaqd.conf
+    #
     configfile = configparser.ConfigParser()
-    if config_file:
-        config_path = config_file
-    else:
-        config_path = os.path.join(config.DATA_DIR, '{}.conf'.format(config.XCP_CLIENT))
+    if not config_file:
+        config_file = "kekdaqd.conf"
+
+    config_path = config_file
     configfile.read(config_path)
     has_config = 'Default' in configfile
-    print("Config file: %s; Exists: %s" % (config_path, "Yes" if has_config else "No"))
+
+    if not has_config:
+        config_path = os.path.join(config.DATA_DIR, '{}.conf'.format(config.XCP_CLIENT))
+        configfile.read(config_path)
+        has_config = 'Default' in configfile
+
+    print("Config file loaded from: %s; Exists: %s" % (config_path, "Yes" if has_config else "No"))
+    print("Loading kekdaqd database files from %s. . ." % str(config.DATA_DIR))
+
 
     # testnet
     if testnet:
@@ -308,7 +321,7 @@ def set_options (data_dir=None, backend_rpc_connect=None,
     elif has_config and 'bitcoind-rpc-password' in configfile['Default'] and configfile['Default']['bitcoind-rpc-password']:
         config.BACKEND_RPC_PASSWORD = configfile['Default']['bitcoind-rpc-password']
     else:
-        raise exceptions.ConfigurationError('backend RPC password not set. (Use configuration file or --backend-rpc-password=PASSWORD)')
+        raise exceptions.ConfigurationError('backend RPC password not set. (Set in kekdaqd.conf configuration file or run with --backend-rpc-password=PASSWORD)')
 
     # Backend Core RPC SSL
     if backend_rpc_ssl:
