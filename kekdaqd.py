@@ -212,10 +212,18 @@ def set_options (data_dir=None, backend_rpc_connect=None,
 
     # Data directory
     if not data_dir:
-        config.DATA_DIR = appdirs.user_data_dir(appauthor=config.XCP_NAME, appname=config.XCP_CLIENT, roaming=True)
+        # Organize kekdaqd database files in /home/USER/.kekdaq/ directory
+        #
+        #config.DATA_DIR = appdirs.user_data_dir(appauthor=config.XCP_NAME, appname=config.XCP_CLIENT, roaming=True)
+        config.DATA_DIR = os.path.expanduser("~/.kekdaq/" + config.XCP_CLIENT)
     else:
         config.DATA_DIR = os.path.expanduser(data_dir)
-    if not os.path.isdir(config.DATA_DIR): os.mkdir(config.DATA_DIR)
+    if not os.path.isdir(config.DATA_DIR): os.makedirs(config.DATA_DIR, exist_ok=True)
+
+    print("Loading kekdaqd database files from %s" % str(config.DATA_DIR))
+
+    #dirr = os.path.expanduser("~/.kekdaq/" + config.XCP_CLIENT)
+    #print(dirr)
 
     # Configuration file
     configfile = configparser.ConfigParser()
