@@ -220,8 +220,6 @@ def set_options (data_dir=None, backend_rpc_connect=None,
         config.DATA_DIR = os.path.expanduser(data_dir)
     if not os.path.isdir(config.DATA_DIR): os.makedirs(config.DATA_DIR, exist_ok=True)
 
-    print("Loading kekdaqd database files from %s" % str(config.DATA_DIR))
-
     # Configuration file
     configfile = configparser.ConfigParser()
     if not config_file:
@@ -234,6 +232,9 @@ def set_options (data_dir=None, backend_rpc_connect=None,
     configfile.read(config_path)
     has_config = 'Default' in configfile
     print("Config file loaded from: %s; Exists: %s" % (config_path, "Yes" if has_config else "No"))
+
+    print("Loading kekdaqd database files from %s. . ." % str(config.DATA_DIR))
+
 
     # testnet
     if testnet:
