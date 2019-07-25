@@ -630,12 +630,6 @@ if __name__ == '__main__':
     parser_cancel.add_argument('--offer-hash', required=True, help='the transaction hash of the order or bet')
     parser_cancel.add_argument('--fee', help='the exact {} fee to be paid to miners'.format(config.BTC))
 
-    parser_callback = subparsers.add_parser('callback', help='callback a fraction of an asset')
-    parser_callback.add_argument('--source', required=True, help='the source address')
-    parser_callback.add_argument('--fraction', required=True, help='the fraction of ASSET to call back')
-    parser_callback.add_argument('--asset', required=True, help='the asset to callback')
-    parser_callback.add_argument('--fee', help='the exact {} fee to be paid to miners'.format(config.BTC))
-
     parser_rps = subparsers.add_parser('rps', help='open a rock-paper-scissors like game')
     parser_rps.add_argument('--source', required=True, help='the source address')
     parser_rps.add_argument('--wager', required=True, help='the quantity of XCP to wager')
