@@ -632,13 +632,6 @@ if __name__ == '__main__':
     parser_bet.add_argument('--expiration', type=int, required=True, help='the number of blocks for which the bet should be valid')
     parser_bet.add_argument('--fee', help='the exact {} fee to be paid to miners'.format(config.BTC))
 
-    parser_dividend = subparsers.add_parser('dividend', help='pay dividends to the holders of an asset (in proportion to their stake in it)')
-    parser_dividend.add_argument('--source', required=True, help='the source address')
-    parser_dividend.add_argument('--quantity-per-unit', required=True, help='the quantity of XCP to be paid per whole unit held of ASSET')
-    parser_dividend.add_argument('--asset', required=True, help='the asset to which pay dividends')
-    parser_dividend.add_argument('--dividend-asset', required=True, help='asset in which to pay the dividends')
-    parser_dividend.add_argument('--fee', help='the exact {} fee to be paid to miners'.format(config.BTC))
-
     parser_burn = subparsers.add_parser('burn', help='destroy {} tm earn XCP, during an initial period of time')
     parser_burn.add_argument('--source', required=True, help='the source address')
     parser_burn.add_argument('--quantity', required=True, help='quantity of {} to be destroyed'.format(config.BTC))
