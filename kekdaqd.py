@@ -579,9 +579,9 @@ if __name__ == '__main__':
     parser_issuance.add_argument('--asset', required=True, help='the name of the asset to be issued (if it’s available)')
     parser_issuance.add_argument('--divisible', action='store_true', help='whether or not the asset is divisible (must agree with previous issuances)')
 ########### This functionality to be changed to card image/series/number modification
-#    parser_issuance.add_argument('--card_image', dest='card_image_', action='store_true', help='whether or not the asset is card_image (must agree with previous issuances)')
-#    parser_issuance.add_argument('--call-date', help='the date from which a card_image asset may be called back (must agree with previous issuances)')
-#    parser_issuance.add_argument('--call-price', help='the price, in XCP per whole unit, at which a card_image asset may be called back (must agree with previous issuances)')
+    parser_issuance.add_argument('--card_image', dest='card_image_', action='store_true', help='whether or not asset has a card image, do not use yet (not functional yet and can be set later on')
+    parser_issuance.add_argument('--card-series', help='a card series or set number/identifier (under development)')
+    parser_issuance.add_argument('--card-number', help='the cards number in the series (under development)')
     parser_issuance.add_argument('--description', type=str, required=True, help='a description of the asset (set to ‘LOCK’ to lock against further issuances with non‐zero quantitys)')
     parser_issuance.add_argument('--fee', help='the exact {} fee to be paid to miners'.format(config.BTC))
 
@@ -602,7 +602,7 @@ if __name__ == '__main__':
     parser_cancel.add_argument('--offer-hash', required=True, help='the transaction hash of the order')
     parser_cancel.add_argument('--fee', help='the exact {} fee to be paid to miners'.format(config.BTC))
 
-########### This functionality to be changed to card image/series/number modification
+########### This functionality to be changed to card image/series/number modification -- reassignment from callback function
 #    parser_card_image = subparsers.add_parser('card_image', help='card_image a fraction of an asset')
 #    parser_card_image.add_argument('--source', required=True, help='the source address')
 #    parser_card_image.add_argument('--fraction', required=True, help='the fraction of ASSET to call back')
