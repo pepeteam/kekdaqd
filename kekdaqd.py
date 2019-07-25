@@ -831,43 +831,6 @@ if __name__ == '__main__':
                                  args.op_return_value},
            args.unsigned)
 
-    elif args.action == 'bet':
-        if args.fee: args.fee = util.devise(db, args.fee, config.BTC, 'input')
-        deadline = calendar.timegm(dateutil.parser.parse(args.deadline).utctimetuple())
-        wager = util.devise(db, args.wager, config.XCP, 'input')
-        counterwager = util.devise(db, args.counterwager, config.XCP, 'input')
-        target_value = util.devise(db, args.target_value, 'value', 'input')
-        leverage = util.devise(db, args.leverage, 'leverage', 'input')
-
-        cli('create_bet', {'source': args.source,
-                           'feed_address': args.feed_address, 'bet_type':
-                           util.BET_TYPE_ID [args.bet_type], 'deadline': deadline, 'wager_quantity': wager,
-                           'counterwager_quantity': counterwager, 'expiration':
-                           args.expiration, 'target_value': target_value,
-                           'leverage': leverage, 'fee': args.fee,
-                           'allow_unconfirmed_inputs': args.unconfirmed,
-                           'encoding': args.encoding, 'fee_per_kb':
-                           args.fee_per_kb, 'regular_dust_size':
-                           args.regular_dust_size, 'multisig_dust_size':
-                           args.multisig_dust_size, 'op_return_value':
-                           args.op_return_value},
-            args.unsigned)
-
-    elif args.action == 'dividend':
-        if args.fee: args.fee = util.devise(db, args.fee, config.BTC, 'input')
-        quantity_per_unit = util.devise(db, args.quantity_per_unit, config.XCP, 'input')
-        cli('create_dividend', {'source': args.source,
-                                'quantity_per_unit': quantity_per_unit,
-                                'asset': args.asset, 'dividend_asset':
-                                args.dividend_asset, 'fee': args.fee,
-                                'allow_unconfirmed_inputs': args.unconfirmed,
-                                'encoding': args.encoding, 'fee_per_kb':
-                                args.fee_per_kb, 'regular_dust_size':
-                                args.regular_dust_size, 'multisig_dust_size':
-                                args.multisig_dust_size, 'op_return_value':
-                                args.op_return_value},
-           args.unsigned)
-
     elif args.action == 'burn':
         if args.fee: args.fee = util.devise(db, args.fee, config.BTC, 'input')
         quantity = util.devise(db, args.quantity, config.BTC, 'input')
@@ -891,49 +854,6 @@ if __name__ == '__main__':
                               args.multisig_dust_size, 'op_return_value':
                               args.op_return_value},
         args.unsigned)
-
-    elif args.action == 'callback':
-        if args.fee: args.fee = util.devise(db, args.fee, config.BTC, 'input')
-        cli('create_callback', {'source': args.source,
-                                'fraction': util.devise(db, args.fraction, 'fraction', 'input'),
-                                'asset': args.asset, 'fee': args.fee,
-                                'allow_unconfirmed_inputs': args.unconfirmed,
-                                'encoding': args.encoding, 'fee_per_kb':
-                                args.fee_per_kb, 'regular_dust_size':
-                                args.regular_dust_size, 'multisig_dust_size':
-                                args.multisig_dust_size, 'op_return_value':
-                                args.op_return_value},
-           args.unsigned)
-
-    elif args.action == 'rps':
-        if args.fee: args.fee = util.devise(db, args.fee, 'BTC', 'input')
-        wager = util.devise(db, args.wager, 'XCP', 'input')
-        random, move_random_hash = generate_move_random_hash(args.move)
-        print('random: {}'.format(random))
-        print('move_random_hash: {}'.format(move_random_hash))
-        cli('create_rps', {'source': args.source,
-                           'possible_moves': args.possible_moves, 'wager': wager,
-                           'move_random_hash': move_random_hash, 'expiration': args.expiration,
-                           'fee': args.fee,'allow_unconfirmed_inputs': args.unconfirmed,
-                           'encoding': args.encoding, 'fee_per_kb':
-                           args.fee_per_kb, 'regular_dust_size':
-                           args.regular_dust_size, 'multisig_dust_size':
-                           args.multisig_dust_size, 'op_return_value':
-                           args.op_return_value},
-           args.unsigned)
-
-    elif args.action == 'rpsresolve':
-        if args.fee: args.fee = util.devise(db, args.fee, 'BTC', 'input')
-        cli('create_rpsresolve', {'source': args.source,
-                                'random': args.random, 'move': args.move,
-                                'rps_match_id': args.rps_match_id, 'fee': args.fee,
-                                'allow_unconfirmed_inputs': args.unconfirmed,
-                                'encoding': args.encoding, 'fee_per_kb':
-                                args.fee_per_kb, 'regular_dust_size':
-                                args.regular_dust_size, 'multisig_dust_size':
-                                args.multisig_dust_size, 'op_return_value':
-                                args.op_return_value},
-           args.unsigned)
 
     elif args.action == 'publish':
         if args.fee: args.fee = util.devise(db, args.fee, 'BTC', 'input')
@@ -992,7 +912,6 @@ if __name__ == '__main__':
                 if holder['escrow']: escrow = holder['escrow']
                 else: escrow = 'None'
                 print('\t' + str(holder['address']) + ',' + str(quantity) + ',' + escrow)
-
 
     elif args.action == 'wallet':
         total_table = PrettyTable(['Asset', 'Balance'])
