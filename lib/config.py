@@ -92,7 +92,7 @@ BURN_MULTIPLIER = 50 				        # from 55 to 50 KDAQ per 1 PEPE.
 BURN_SECOND_MULTIPLIER = 10
 
 # Protocol defaults
-# NOTE: If the DUST_SIZE constants are changed, they MUST also be changed in counterblockd/lib/config.py as well
+# NOTE: If the DUST_SIZE constants are changed, they MUST also be changed in kekdaqd/lib/config.py as well
 DEFAULT_REGULAR_DUST_SIZE = 0.0001 * UNIT 		  
 DEFAULT_MULTISIG_DUST_SIZE = 0.0001 * UNIT * 2 
 DEFAULT_OP_RETURN_VALUE = 0 			    # 0 PEPE.

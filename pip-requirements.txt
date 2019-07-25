@@ -25,6 +25,8 @@ Flask-HTTPAuth==2.2.1
 tornado==4.0
 
 pycrypto>=2.6
+
+apsw
 #^ on windows, this will skip as the windows pycrypto installer should have been run
 # One of available download locations is: 
 # http://www.voidspace.org.uk/python/modules.shtml#pycrypto

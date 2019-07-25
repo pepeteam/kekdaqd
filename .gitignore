@@ -24,3 +24,5 @@ test/counterpartyd.unittest.db-wal
 test/db.dump.new
 test/output.json.new
 .history
+
+kekdaqd.conf
