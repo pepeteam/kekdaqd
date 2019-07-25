@@ -706,7 +706,7 @@ def supplies (db):
     cursor.close()
     return supplies
 
-def get_url(url, abort_on_error=False, is_json=True, fetch_timeout=5):
+def get_url(url, abort_on_error=False, is_json=True, fetch_timeout=30):
     try:
         r = requests.get(url, timeout=fetch_timeout)
     except Exception as e:
