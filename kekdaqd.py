@@ -607,9 +607,10 @@ if __name__ == '__main__':
     parser_issuance.add_argument('--quantity', default=0, help='the quantity of ASSET to be issued')
     parser_issuance.add_argument('--asset', required=True, help='the name of the asset to be issued (if it’s available)')
     parser_issuance.add_argument('--divisible', action='store_true', help='whether or not the asset is divisible (must agree with previous issuances)')
-    parser_issuance.add_argument('--callable', dest='callable_', action='store_true', help='whether or not the asset is callable (must agree with previous issuances)')
-    parser_issuance.add_argument('--call-date', help='the date from which a callable asset may be called back (must agree with previous issuances)')
-    parser_issuance.add_argument('--call-price', help='the price, in XCP per whole unit, at which a callable asset may be called back (must agree with previous issuances)')
+########### This functionality to be changed to card image/series/number modification
+#    parser_issuance.add_argument('--callable', dest='callable_', action='store_true', help='whether or not the asset is callable (must agree with previous issuances)')
+#    parser_issuance.add_argument('--call-date', help='the date from which a callable asset may be called back (must agree with previous issuances)')
+#    parser_issuance.add_argument('--call-price', help='the price, in XCP per whole unit, at which a callable asset may be called back (must agree with previous issuances)')
     parser_issuance.add_argument('--description', type=str, required=True, help='a description of the asset (set to ‘LOCK’ to lock against further issuances with non‐zero quantitys)')
     parser_issuance.add_argument('--fee', help='the exact {} fee to be paid to miners'.format(config.BTC))
 
@@ -625,10 +626,17 @@ if __name__ == '__main__':
     parser_burn.add_argument('--quantity', required=True, help='quantity of {} to be destroyed'.format(config.BTC))
     parser_burn.add_argument('--fee', help='the exact {} fee to be paid to miners'.format(config.BTC))
 
-    parser_cancel= subparsers.add_parser('cancel', help='cancel an open order or bet you created')
+    parser_cancel= subparsers.add_parser('cancel', help='cancel an open order you created')
     parser_cancel.add_argument('--source', required=True, help='the source address')
-    parser_cancel.add_argument('--offer-hash', required=True, help='the transaction hash of the order or bet')
+    parser_cancel.add_argument('--offer-hash', required=True, help='the transaction hash of the order')
     parser_cancel.add_argument('--fee', help='the exact {} fee to be paid to miners'.format(config.BTC))
+
+########### This functionality to be changed to card image/series/number modification
+#    parser_callback = subparsers.add_parser('callback', help='callback a fraction of an asset')
+#    parser_callback.add_argument('--source', required=True, help='the source address')
+#    parser_callback.add_argument('--fraction', required=True, help='the fraction of ASSET to call back')
+#    parser_callback.add_argument('--asset', required=True, help='the asset to callback')
+#    parser_callback.add_argument('--fee', help='the exact {} fee to be paid to miners'.format(config.BTC))
 
     parser_publish = subparsers.add_parser('publish', help='publish arbitrary data in the blockchain')
     parser_publish.add_argument('--source', required=True, help='the source address')
@@ -843,6 +851,20 @@ if __name__ == '__main__':
                             args.op_return_value},
         args.unsigned)
 
+######## This functionality to be changed to card image/series/number modification
+#    elif args.action == 'callback':
+#        if args.fee: args.fee = util.devise(db, args.fee, config.BTC, 'input')
+#        cli('create_callback', {'source': args.source,
+#                                'fraction': util.devise(db, args.fraction, 'fraction', 'input'),
+#                                'asset': args.asset, 'fee': args.fee,
+#                                'allow_unconfirmed_inputs': args.unconfirmed,
+#                                'encoding': args.encoding, 'fee_per_kb':
+#                                args.fee_per_kb, 'regular_dust_size':
+#                                args.regular_dust_size, 'multisig_dust_size':
+#                                args.multisig_dust_size, 'op_return_value':
+#                                args.op_return_value},
+#           args.unsigned
+
     elif args.action == 'cancel':
         if args.fee: args.fee = util.devise(db, args.fee, config.BTC, 'input')
         cli('create_cancel', {'source': args.source,
@@ -891,18 +913,19 @@ if __name__ == '__main__':
         call_date = util.isodt(results['call_date']) if results['call_date'] else results['call_date']
         call_price = str(results['call_price']) + ' XCP' if results['call_price'] else results['call_price']
 
-        print('Asset Name:', args.asset)
-        print('Asset ID:', asset_id)
+        print('Asset/Card Name:', args.asset)
+        print('Asset/Card ID:', asset_id)
         print('Divisible:', divisible)
         print('Supply:', supply)
         print('Issuer:', results['issuer'])
-        print('Callable:', results['callable'])
-        print('Call Date:', call_date)
-        print('Call Price:', call_price)
+#   Callback functionality removed for compliance. Leaving data structures intact to later use this space for card exists Y/N, series number, and card number
+        print('Card Image:', results['callable'])
+        print('Card Series:', call_date)
+        print('Card Number:', call_price)
         print('Description:', '‘' + results['description'] + '’')
 
         if args.asset != config.BTC:
-            print('Shareholders:')
+            print('Asset/Card Holders:')
             balances = util.api('get_balances', {'filters': [('asset', '==', args.asset)]})
             print('\taddress, quantity, escrow')
             for holder in util.holders(db, args.asset):
@@ -922,7 +945,7 @@ if __name__ == '__main__':
             address, btc_balance = bunch[:2]
             address_data = get_address(db, address=address)
             balances = address_data['balances']
-            table = PrettyTable(['Asset', 'Balance'])
+            table = PrettyTable(['Asset/Card', 'Balance'])
             empty = True
             if btc_balance:
                 table.add_row([config.BTC, btc_balance])  # BTC
