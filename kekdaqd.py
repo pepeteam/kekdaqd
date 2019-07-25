@@ -37,19 +37,10 @@ def get_address (db, address):
     address_dict['btcpays'] = util.api('get_btcpays', {'filters': [('source', '==', address), ('destination', '==', address)], 'filterop': 'or'})
     address_dict['issuances'] = util.api('get_issuances', {'filters': [('source', '==', address),]})
     address_dict['broadcasts'] = util.api('get_broadcasts', {'filters': [('source', '==', address),]})
-    address_dict['bets'] = util.api('get_bets', {'filters': [('source', '==', address),]})
-    address_dict['bet_matches'] = util.api('get_bet_matches', {'filters': [('tx0_address', '==', address), ('tx1_address', '==', address)], 'filterop': 'or'})
-    address_dict['dividends'] = util.api('get_dividends', {'filters': [('source', '==', address),]})
     address_dict['cancels'] = util.api('get_cancels', {'filters': [('source', '==', address),]})
-    address_dict['rps'] = util.api('get_rps', {'filters': [('source', '==', address),]})
-    address_dict['rps_matches'] = util.api('get_rps_matches', {'filters': [('tx0_address', '==', address), ('tx1_address', '==', address)], 'filterop': 'or'})
-    address_dict['callbacks'] = util.api('get_callbacks', {'filters': [('source', '==', address),]})
-    address_dict['bet_expirations'] = util.api('get_bet_expirations', {'filters': [('source', '==', address),]})
+    address_dict['card_images'] = util.api('get_card_images', {'filters': [('source', '==', address),]})
     address_dict['order_expirations'] = util.api('get_order_expirations', {'filters': [('source', '==', address),]})
-    address_dict['rps_expirations'] = util.api('get_rps_expirations', {'filters': [('source', '==', address),]})
-    address_dict['bet_match_expirations'] = util.api('get_bet_match_expirations', {'filters': [('tx0_address', '==', address), ('tx1_address', '==', address)], 'filterop': 'or'})
     address_dict['order_match_expirations'] = util.api('get_order_match_expirations', {'filters': [('tx0_address', '==', address), ('tx1_address', '==', address)], 'filterop': 'or'})
-    address_dict['rps_match_expirations'] = util.api('get_rps_match_expirations', {'filters': [('tx0_address', '==', address), ('tx1_address', '==', address)], 'filterop': 'or'})
     return address_dict
 
 
@@ -69,16 +60,6 @@ def format_order (order):
         price_assets = give_asset + '/' + get_asset + ' bid'
 
     return [D(give_remaining), give_asset, price, price_assets, str(order['fee_required'] / config.UNIT), str(order['fee_provided'] / config.UNIT), order['expire_index'] - util.last_block(db)['block_index'], order['tx_hash']]
-
-def format_bet (bet):
-    odds = D(bet['counterwager_quantity']) / D(bet['wager_quantity'])
-
-    if not bet['target_value']: target_value = None
-    else: target_value = bet['target_value']
-    if not bet['leverage']: leverage = None
-    else: leverage = util.devise(db, D(bet['leverage']) / 5040, 'leverage', 'output')
-
-    return [util.BET_TYPE_NAME[bet['bet_type']], bet['feed_address'], util.isodt(bet['deadline']), target_value, leverage, str(bet['wager_remaining'] / config.UNIT) + ' XCP', util.devise(db, odds, 'odds', 'output'), bet['expire_index'] - util.last_block(db)['block_index'], bet['tx_hash']]
 
 def format_order_match (db, order_match):
     order_match_id = order_match['tx0_hash'] + order_match['tx1_hash']
@@ -122,16 +103,6 @@ def market (give_asset, get_asset):
         table.add_row(order)
     print('Open Orders')
     table = table.get_string(sortby='Price')
-    print(table)
-    print('\n')
-
-    # Open bets.
-    bets = util.api('get_bets', {'status': 'open'})
-    table = PrettyTable(['Bet Type', 'Feed Address', 'Deadline', 'Target Value', 'Leverage', 'Wager', 'Odds', 'Time Left', 'Tx Hash'])
-    for bet in bets:
-        bet = format_bet(bet)
-        table.add_row(bet)
-    print('Open Bets')
     print(table)
     print('\n')
 
@@ -607,9 +578,10 @@ if __name__ == '__main__':
     parser_issuance.add_argument('--quantity', default=0, help='the quantity of ASSET to be issued')
     parser_issuance.add_argument('--asset', required=True, help='the name of the asset to be issued (if it’s available)')
     parser_issuance.add_argument('--divisible', action='store_true', help='whether or not the asset is divisible (must agree with previous issuances)')
-    parser_issuance.add_argument('--callable', dest='callable_', action='store_true', help='whether or not the asset is callable (must agree with previous issuances)')
-    parser_issuance.add_argument('--call-date', help='the date from which a callable asset may be called back (must agree with previous issuances)')
-    parser_issuance.add_argument('--call-price', help='the price, in XCP per whole unit, at which a callable asset may be called back (must agree with previous issuances)')
+########### This functionality to be changed to card image/series/number modification
+    parser_issuance.add_argument('--card_image', dest='card_image_', action='store_true', help='whether or not asset has a card image, do not use yet (not functional yet and can be set later on')
+    parser_issuance.add_argument('--card-series', help='a card series or set number/identifier (under development)')
+    parser_issuance.add_argument('--card-number', help='the cards number in the series (under development)')
     parser_issuance.add_argument('--description', type=str, required=True, help='a description of the asset (set to ‘LOCK’ to lock against further issuances with non‐zero quantitys)')
     parser_issuance.add_argument('--fee', help='the exact {} fee to be paid to miners'.format(config.BTC))
 
@@ -617,58 +589,25 @@ if __name__ == '__main__':
     parser_broadcast.add_argument('--source', required=True, help='the source address')
     parser_broadcast.add_argument('--text', type=str, required=True, help='the textual part of the broadcast (set to ‘LOCK’ to lock feed)')
     parser_broadcast.add_argument('--value', type=float, default=-1, help='numerical value of the broadcast')
-    parser_broadcast.add_argument('--fee-fraction', default=0, help='the fraction of bets on this feed that go to its operator')
+    parser_broadcast.add_argument('--fee-fraction', default=0, help='0 fee to node operator by default')
     parser_broadcast.add_argument('--fee', help='the exact {} fee to be paid to miners'.format(config.BTC))
-
-    parser_bet = subparsers.add_parser('bet', help='offer to make a bet on the value of a feed')
-    parser_bet.add_argument('--source', required=True, help='the source address')
-    parser_bet.add_argument('--feed-address', required=True, help='the address which publishes the feed to bet on')
-    parser_bet.add_argument('--bet-type', choices=list(util.BET_TYPE_NAME.values()), required=True, help='choices: {}'.format(list(util.BET_TYPE_NAME.values())))
-    parser_bet.add_argument('--deadline', required=True, help='the date and time at which the bet should be decided/settled')
-    parser_bet.add_argument('--wager', required=True, help='the quantity of XCP to wager')
-    parser_bet.add_argument('--counterwager', required=True, help='the minimum quantity of XCP to be wagered by the user to bet against you, if he were to accept the whole thing')
-    parser_bet.add_argument('--target-value', default=0.0, help='target value for Equal/NotEqual bet')
-    parser_bet.add_argument('--leverage', type=int, default=5040, help='leverage, as a fraction of 5040')
-    parser_bet.add_argument('--expiration', type=int, required=True, help='the number of blocks for which the bet should be valid')
-    parser_bet.add_argument('--fee', help='the exact {} fee to be paid to miners'.format(config.BTC))
-
-    parser_dividend = subparsers.add_parser('dividend', help='pay dividends to the holders of an asset (in proportion to their stake in it)')
-    parser_dividend.add_argument('--source', required=True, help='the source address')
-    parser_dividend.add_argument('--quantity-per-unit', required=True, help='the quantity of XCP to be paid per whole unit held of ASSET')
-    parser_dividend.add_argument('--asset', required=True, help='the asset to which pay dividends')
-    parser_dividend.add_argument('--dividend-asset', required=True, help='asset in which to pay the dividends')
-    parser_dividend.add_argument('--fee', help='the exact {} fee to be paid to miners'.format(config.BTC))
 
     parser_burn = subparsers.add_parser('burn', help='destroy {} tm earn XCP, during an initial period of time')
     parser_burn.add_argument('--source', required=True, help='the source address')
     parser_burn.add_argument('--quantity', required=True, help='quantity of {} to be destroyed'.format(config.BTC))
     parser_burn.add_argument('--fee', help='the exact {} fee to be paid to miners'.format(config.BTC))
 
-    parser_cancel= subparsers.add_parser('cancel', help='cancel an open order or bet you created')
+    parser_cancel= subparsers.add_parser('cancel', help='cancel an open order you created')
     parser_cancel.add_argument('--source', required=True, help='the source address')
-    parser_cancel.add_argument('--offer-hash', required=True, help='the transaction hash of the order or bet')
+    parser_cancel.add_argument('--offer-hash', required=True, help='the transaction hash of the order')
     parser_cancel.add_argument('--fee', help='the exact {} fee to be paid to miners'.format(config.BTC))
 
-    parser_callback = subparsers.add_parser('callback', help='callback a fraction of an asset')
-    parser_callback.add_argument('--source', required=True, help='the source address')
-    parser_callback.add_argument('--fraction', required=True, help='the fraction of ASSET to call back')
-    parser_callback.add_argument('--asset', required=True, help='the asset to callback')
-    parser_callback.add_argument('--fee', help='the exact {} fee to be paid to miners'.format(config.BTC))
-
-    parser_rps = subparsers.add_parser('rps', help='open a rock-paper-scissors like game')
-    parser_rps.add_argument('--source', required=True, help='the source address')
-    parser_rps.add_argument('--wager', required=True, help='the quantity of XCP to wager')
-    parser_rps.add_argument('--move', type=int, required=True, help='the selected move')
-    parser_rps.add_argument('--possible-moves', type=int, required=True, help='the number of possible moves (odd number greater or equal than 3)')
-    parser_rps.add_argument('--expiration', type=int, required=True, help='the number of blocks for which the bet should be valid')
-    parser_rps.add_argument('--fee', help='the exact BTC fee to be paid to miners')
-
-    parser_rpsresolve = subparsers.add_parser('rpsresolve', help='resolve a rock-paper-scissors like game')
-    parser_rpsresolve.add_argument('--source', required=True, help='the source address')
-    parser_rpsresolve.add_argument('--random', type=str, required=True, help='the random number used in the corresponding rps transaction')
-    parser_rpsresolve.add_argument('--move', type=int, required=True, help='the selected move in the corresponding rps transaction')
-    parser_rpsresolve.add_argument('--rps-match-id', required=True, help='the concatenation of the hashes of the two transactions which compose the rps match')
-    parser_rpsresolve.add_argument('--fee', help='the exact BTC fee to be paid to miners')
+########### This functionality to be changed to card image/series/number modification -- reassignment from callback function
+#    parser_card_image = subparsers.add_parser('card_image', help='card_image a fraction of an asset')
+#    parser_card_image.add_argument('--source', required=True, help='the source address')
+#    parser_card_image.add_argument('--fraction', required=True, help='the fraction of ASSET to call back')
+#    parser_card_image.add_argument('--asset', required=True, help='the asset to card_image')
+#    parser_card_image.add_argument('--fee', help='the exact {} fee to be paid to miners'.format(config.BTC))
 
     parser_publish = subparsers.add_parser('publish', help='publish arbitrary data in the blockchain')
     parser_publish.add_argument('--source', required=True, help='the source address')
@@ -829,22 +768,22 @@ if __name__ == '__main__':
         if args.fee: args.fee = util.devise(db, args.fee, config.BTC, 'input')
         quantity = util.devise(db, args.quantity, None, 'input',
                                divisible=args.divisible)
-        if args.callable_:
-            if not args.call_date:
-                parser.error('must specify call date of callable asset', )
-            if not args.call_price:
-                parser.error('must specify call price of callable asset')
-            call_date = calendar.timegm(dateutil.parser.parse(args.call_date).utctimetuple())
-            call_price = float(args.call_price)
+        if args.card_image_:
+            if not args.card_series:
+                parser.error('must specify call date of card_image asset', )
+            if not args.card_number:
+                parser.error('must specify call price of card_image asset')
+            card_series = calendar.timegm(dateutil.parser.parse(args.card_series).utctimetuple())
+            card_number = float(args.card_number)
         else:
-            call_date, call_price = 0, 0
+            card_series, card_number = 0, 0
 
         cli('create_issuance', {'source': args.source, 'asset': args.asset,
                                 'quantity': quantity, 'divisible':
                                 args.divisible, 'description':
-                                args.description, 'callable_': args.callable_,
-                                'call_date': call_date, 'call_price':
-                                call_price, 'transfer_destination':
+                                args.description, 'card_image_': args.card_image_,
+                                'card_series': card_series, 'card_number':
+                                card_number, 'transfer_destination':
                                 args.transfer_destination, 'fee': args.fee,
                                 'allow_unconfirmed_inputs': args.unconfirmed,
                                 'encoding': args.encoding, 'fee_per_kb':
@@ -871,43 +810,6 @@ if __name__ == '__main__':
                                  args.op_return_value},
            args.unsigned)
 
-    elif args.action == 'bet':
-        if args.fee: args.fee = util.devise(db, args.fee, config.BTC, 'input')
-        deadline = calendar.timegm(dateutil.parser.parse(args.deadline).utctimetuple())
-        wager = util.devise(db, args.wager, config.XCP, 'input')
-        counterwager = util.devise(db, args.counterwager, config.XCP, 'input')
-        target_value = util.devise(db, args.target_value, 'value', 'input')
-        leverage = util.devise(db, args.leverage, 'leverage', 'input')
-
-        cli('create_bet', {'source': args.source,
-                           'feed_address': args.feed_address, 'bet_type':
-                           util.BET_TYPE_ID [args.bet_type], 'deadline': deadline, 'wager_quantity': wager,
-                           'counterwager_quantity': counterwager, 'expiration':
-                           args.expiration, 'target_value': target_value,
-                           'leverage': leverage, 'fee': args.fee,
-                           'allow_unconfirmed_inputs': args.unconfirmed,
-                           'encoding': args.encoding, 'fee_per_kb':
-                           args.fee_per_kb, 'regular_dust_size':
-                           args.regular_dust_size, 'multisig_dust_size':
-                           args.multisig_dust_size, 'op_return_value':
-                           args.op_return_value},
-            args.unsigned)
-
-    elif args.action == 'dividend':
-        if args.fee: args.fee = util.devise(db, args.fee, config.BTC, 'input')
-        quantity_per_unit = util.devise(db, args.quantity_per_unit, config.XCP, 'input')
-        cli('create_dividend', {'source': args.source,
-                                'quantity_per_unit': quantity_per_unit,
-                                'asset': args.asset, 'dividend_asset':
-                                args.dividend_asset, 'fee': args.fee,
-                                'allow_unconfirmed_inputs': args.unconfirmed,
-                                'encoding': args.encoding, 'fee_per_kb':
-                                args.fee_per_kb, 'regular_dust_size':
-                                args.regular_dust_size, 'multisig_dust_size':
-                                args.multisig_dust_size, 'op_return_value':
-                                args.op_return_value},
-           args.unsigned)
-
     elif args.action == 'burn':
         if args.fee: args.fee = util.devise(db, args.fee, config.BTC, 'input')
         quantity = util.devise(db, args.quantity, config.BTC, 'input')
@@ -920,6 +822,20 @@ if __name__ == '__main__':
                             args.op_return_value},
         args.unsigned)
 
+######## This functionality to be changed to card image/series/number modification
+#    elif args.action == 'card_image':
+#        if args.fee: args.fee = util.devise(db, args.fee, config.BTC, 'input')
+#        cli('create_card_image', {'source': args.source,
+#                                'fraction': util.devise(db, args.fraction, 'fraction', 'input'),
+#                                'asset': args.asset, 'fee': args.fee,
+#                                'allow_unconfirmed_inputs': args.unconfirmed,
+#                                'encoding': args.encoding, 'fee_per_kb':
+#                                args.fee_per_kb, 'regular_dust_size':
+#                                args.regular_dust_size, 'multisig_dust_size':
+#                                args.multisig_dust_size, 'op_return_value':
+#                                args.op_return_value},
+#           args.unsigned
+
     elif args.action == 'cancel':
         if args.fee: args.fee = util.devise(db, args.fee, config.BTC, 'input')
         cli('create_cancel', {'source': args.source,
@@ -931,49 +847,6 @@ if __name__ == '__main__':
                               args.multisig_dust_size, 'op_return_value':
                               args.op_return_value},
         args.unsigned)
-
-    elif args.action == 'callback':
-        if args.fee: args.fee = util.devise(db, args.fee, config.BTC, 'input')
-        cli('create_callback', {'source': args.source,
-                                'fraction': util.devise(db, args.fraction, 'fraction', 'input'),
-                                'asset': args.asset, 'fee': args.fee,
-                                'allow_unconfirmed_inputs': args.unconfirmed,
-                                'encoding': args.encoding, 'fee_per_kb':
-                                args.fee_per_kb, 'regular_dust_size':
-                                args.regular_dust_size, 'multisig_dust_size':
-                                args.multisig_dust_size, 'op_return_value':
-                                args.op_return_value},
-           args.unsigned)
-
-    elif args.action == 'rps':
-        if args.fee: args.fee = util.devise(db, args.fee, 'BTC', 'input')
-        wager = util.devise(db, args.wager, 'XCP', 'input')
-        random, move_random_hash = generate_move_random_hash(args.move)
-        print('random: {}'.format(random))
-        print('move_random_hash: {}'.format(move_random_hash))
-        cli('create_rps', {'source': args.source,
-                           'possible_moves': args.possible_moves, 'wager': wager,
-                           'move_random_hash': move_random_hash, 'expiration': args.expiration,
-                           'fee': args.fee,'allow_unconfirmed_inputs': args.unconfirmed,
-                           'encoding': args.encoding, 'fee_per_kb':
-                           args.fee_per_kb, 'regular_dust_size':
-                           args.regular_dust_size, 'multisig_dust_size':
-                           args.multisig_dust_size, 'op_return_value':
-                           args.op_return_value},
-           args.unsigned)
-
-    elif args.action == 'rpsresolve':
-        if args.fee: args.fee = util.devise(db, args.fee, 'BTC', 'input')
-        cli('create_rpsresolve', {'source': args.source,
-                                'random': args.random, 'move': args.move,
-                                'rps_match_id': args.rps_match_id, 'fee': args.fee,
-                                'allow_unconfirmed_inputs': args.unconfirmed,
-                                'encoding': args.encoding, 'fee_per_kb':
-                                args.fee_per_kb, 'regular_dust_size':
-                                args.regular_dust_size, 'multisig_dust_size':
-                                args.multisig_dust_size, 'op_return_value':
-                                args.op_return_value},
-           args.unsigned)
 
     elif args.action == 'publish':
         if args.fee: args.fee = util.devise(db, args.fee, 'BTC', 'input')
@@ -1008,21 +881,29 @@ if __name__ == '__main__':
         asset_id = util.asset_id(args.asset)
         divisible = results['divisible']
         supply = util.devise(db, results['supply'], args.asset, dest='output')
-        call_date = util.isodt(results['call_date']) if results['call_date'] else results['call_date']
-        call_price = str(results['call_price']) + ' XCP' if results['call_price'] else results['call_price']
-
-        print('Asset Name:', args.asset)
-        print('Asset ID:', asset_id)
+        card_series = 0
+        card_number = 0
+##############
+##############
+##     To be implemented: store a series number and card number in series. For now, set to 0
+#
+#        card_series = util.isodt(results['card_series']) if results['card_series'] else results['card_series']
+#        card_number = str(results['card_number']) + ' XCP' if results['card_number'] else results['card_number']
+##############
+        print('Asset/Card Name:', args.asset)
+        print('Asset/Card ID:', asset_id)
         print('Divisible:', divisible)
+        print('Creation Block:', results['block_index'])
         print('Supply:', supply)
         print('Issuer:', results['issuer'])
-        print('Callable:', results['callable'])
-        print('Call Date:', call_date)
-        print('Call Price:', call_price)
+#   Callback functionality removed for compliance. Leaving data structures intact to later use this space for card exists Y/N, series number, and card number
+        print('Card Image:', results['card_image'])
+        print('Card Series:', card_series)
+        print('Card Number:', card_number)
         print('Description:', '‘' + results['description'] + '’')
 
         if args.asset != config.BTC:
-            print('Shareholders:')
+            print('Asset/Card Holders:')
             balances = util.api('get_balances', {'filters': [('asset', '==', args.asset)]})
             print('\taddress, quantity, escrow')
             for holder in util.holders(db, args.asset):
@@ -1033,7 +914,6 @@ if __name__ == '__main__':
                 else: escrow = 'None'
                 print('\t' + str(holder['address']) + ',' + str(quantity) + ',' + escrow)
 
-
     elif args.action == 'wallet':
         total_table = PrettyTable(['Asset', 'Balance'])
         totals = {}
@@ -1043,7 +923,7 @@ if __name__ == '__main__':
             address, btc_balance = bunch[:2]
             address_data = get_address(db, address=address)
             balances = address_data['balances']
-            table = PrettyTable(['Asset', 'Balance'])
+            table = PrettyTable(['Asset/Card', 'Balance'])
             empty = True
             if btc_balance:
                 table.add_row([config.BTC, btc_balance])  # BTC
