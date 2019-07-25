@@ -620,18 +620,6 @@ if __name__ == '__main__':
     parser_broadcast.add_argument('--fee-fraction', default=0, help='the fraction of bets on this feed that go to its operator')
     parser_broadcast.add_argument('--fee', help='the exact {} fee to be paid to miners'.format(config.BTC))
 
-    parser_bet = subparsers.add_parser('bet', help='offer to make a bet on the value of a feed')
-    parser_bet.add_argument('--source', required=True, help='the source address')
-    parser_bet.add_argument('--feed-address', required=True, help='the address which publishes the feed to bet on')
-    parser_bet.add_argument('--bet-type', choices=list(util.BET_TYPE_NAME.values()), required=True, help='choices: {}'.format(list(util.BET_TYPE_NAME.values())))
-    parser_bet.add_argument('--deadline', required=True, help='the date and time at which the bet should be decided/settled')
-    parser_bet.add_argument('--wager', required=True, help='the quantity of XCP to wager')
-    parser_bet.add_argument('--counterwager', required=True, help='the minimum quantity of XCP to be wagered by the user to bet against you, if he were to accept the whole thing')
-    parser_bet.add_argument('--target-value', default=0.0, help='target value for Equal/NotEqual bet')
-    parser_bet.add_argument('--leverage', type=int, default=5040, help='leverage, as a fraction of 5040')
-    parser_bet.add_argument('--expiration', type=int, required=True, help='the number of blocks for which the bet should be valid')
-    parser_bet.add_argument('--fee', help='the exact {} fee to be paid to miners'.format(config.BTC))
-
     parser_burn = subparsers.add_parser('burn', help='destroy {} tm earn XCP, during an initial period of time')
     parser_burn.add_argument('--source', required=True, help='the source address')
     parser_burn.add_argument('--quantity', required=True, help='quantity of {} to be destroyed'.format(config.BTC))
