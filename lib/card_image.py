@@ -1,6 +1,6 @@
 #! /usr/bin/python3
 
-"""Callback a callable asset."""
+"""card_image asset functions"""
 
 import struct
 import decimal
@@ -20,7 +20,7 @@ def validate (db, source, fraction, asset, block_time, block_index, parse):
 
     # TODO
     if not config.TESTNET:
-        problems.append('callbacks are currently disabled on mainnet')
+        problems.append('card_images are currently disabled on mainnet')
         return None, None, None, problems
     # TODO
 
@@ -40,16 +40,16 @@ def validate (db, source, fraction, asset, block_time, block_index, parse):
             problems.append('not asset owner')
             return None, None, None, problems
 
-        if not last_issuance['callable']:
-            problems.append('uncallable asset')
+        if not last_issuance['card_image']:
+            problems.append('uncard_image asset')
             return None, None, None, problems
-        elif last_issuance['call_date'] > block_time: problems.append('before call date')
+        elif last_issuance['card_series'] > block_time: problems.append('before call date')
 
-        call_price = round(last_issuance['call_price'], 6)  # TODO: arbitrary
+        card_number = round(last_issuance['card_number'], 6)  # TODO: arbitrary
         divisible = last_issuance['divisible']
 
     if not divisible:   # Pay per output unit.
-        call_price *= config.UNIT
+        card_number *= config.UNIT
 
     # If parsing, unescrow all funds of asset. (Order of operations is
     # important here.)
@@ -91,15 +91,15 @@ def validate (db, source, fraction, asset, block_time, block_index, parse):
     if not callback_total: problems.append('nothing called back')
 
     balances = list(cursor.execute('''SELECT * FROM balances WHERE (address = ? AND asset = ?)''', (source, config.XCP)))
-    if not balances or balances[0]['quantity'] < (call_price * callback_total):
+    if not balances or balances[0]['quantity'] < (card_number * callback_total):
         problems.append('insufficient funds')
 
     cursor.close()
-    return call_price, callback_total, outputs, problems
+    return card_number, callback_total, outputs, problems
 
 def compose (db, source, fraction, asset):
-    call_price, callback_total, outputs, problems = validate(db, source, fraction, asset, util.last_block(db)['block_time'], util.last_block(db)['block_index'], parse=False)
-    if problems: raise exceptions.CallbackError(problems)
+    card_number, callback_total, outputs, problems = validate(db, source, fraction, asset, util.last_block(db)['block_time'], util.last_block(db)['block_index'], parse=False)
+    if problems: raise exceptions.Card_ImageError(problems)
     print('Total quantity to be called back:', util.devise(db, callback_total, asset, 'output'), asset)
 
     asset_id = util.asset_id(asset)
@@ -121,20 +121,20 @@ def parse (db, tx, message):
         status = 'invalid: could not unpack'
 
     if status == 'valid':
-        call_price, callback_total, outputs, problems = validate(db, tx['source'], fraction, asset, tx['block_time'], tx['block_index'], parse=True)
+        card_number, callback_total, outputs, problems = validate(db, tx['source'], fraction, asset, tx['block_time'], tx['block_index'], parse=True)
         if problems: status = 'invalid: ' + '; '.join(problems)
 
     if status == 'valid':
         # Issuer.
-        assert call_price * callback_total == int(call_price * callback_total)
-        util.debit(db, tx['block_index'], tx['source'], config.XCP, int(call_price * callback_total))
+        assert card_number * callback_total == int(card_number * callback_total)
+        util.debit(db, tx['block_index'], tx['source'], config.XCP, int(card_number * callback_total))
         util.credit(db, tx['block_index'], tx['source'], asset, callback_total)
 
         # Holders.
         for output in outputs:
-            assert call_price * output['callback_quantity'] == int(call_price * output['callback_quantity'])
+            assert card_number * output['callback_quantity'] == int(card_number * output['callback_quantity'])
             util.debit(db, tx['block_index'], output['address'], asset, output['callback_quantity'])
-            util.credit(db, tx['block_index'], output['address'], config.XCP, int(call_price * output['callback_quantity']))
+            util.credit(db, tx['block_index'], output['address'], config.XCP, int(card_number * output['callback_quantity']))
 
     # Add parsed transaction to message-type–specific table.
     bindings = {
@@ -146,7 +146,7 @@ def parse (db, tx, message):
         'asset': asset,
         'status': status,
     }
-    sql='insert into callbacks values(:tx_index, :tx_hash, :block_index, :source, :fraction, :asset, :status)'
+    sql='insert into card_images values(:tx_index, :tx_hash, :block_index, :source, :fraction, :asset, :status)'
     callback_parse_cursor.execute(sql, bindings)
 
     callback_parse_cursor.close()
